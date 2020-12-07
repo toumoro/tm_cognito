@@ -1,0 +1,23 @@
+{
+    "name": "toumoro/tm-cognito",
+    "type": "typo3-cms-extension",
+    "description": "",
+    "authors": [],
+    "require": {
+        "typo3/cms-core": "^8.7.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Toumoro\\TmCognito\\": "Classes"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Toumoro\\TmCognito\\Tests\\": "Tests"
+        }
+    },
+    "replace": {
+        "tm_cognito": "self.version",
+        "typo3-ter/tm-cognito": "self.version"
+    }
+}

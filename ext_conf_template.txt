@@ -1,0 +1,14 @@
+# cat=basic/enable; type=boolean; label=Active ?
+active = 0
+
+# cat=basic/enable; type=string; label=Cognito app client id
+clientId =
+
+# cat=basic/enable; type=string; label=region
+region = 
+
+# cat=basic/enable; type=string; label=Userpool id
+userPoolId = 
+
+# cat=basic/enable; type=string; label=Cognito Required Group
+cognitoRequiredGroup = 
