@@ -3,7 +3,7 @@ namespace Toumoro\TmCognito\Service;
 
 /***
  *
- * This file is part of the "tm_cognito" Extension for TYPO3 CMS by Toumoro.com.
+ * This file is part of the "Backend authentication with AWS Cognito" Extension for TYPO3 CMS by Toumoro.com.
  *
  * For the full copyright and license information, please read the
  * LICENSE.txt file that was distributed with this source code.
