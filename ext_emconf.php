@@ -11,8 +11,8 @@
  ***************************************************************/
 
 $EM_CONF[$_EXTKEY] = [
-    'title' => 'tm_cognito',
-    'description' => 'Authenticate to AWS cognito',
+    'title' => 'Backend authentication with AWS Cognito',
+    'description' => 'This extension enables backend authentication with AWS Cognito.',
     'category' => 'plugin',
     'author' => 'Simon Ouellet',
     'author_email' => 'simon.ouellet@toumoro.com',
