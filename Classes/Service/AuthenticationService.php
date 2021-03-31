@@ -38,9 +38,10 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 	
 
 	//if scheduler
-	 if (isset($_SERVER['argv'])) {
+	 if (!empty($_SERVER['argv'])) {
 		return array();
 	 }
+
         $this->tablename = 'fe_users';
         $this->tablenameGroup = 'fe_groups';
         $this->nameField = 'name';
