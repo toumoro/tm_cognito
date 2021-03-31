@@ -33,21 +33,22 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     public function getUser() {
 
 
-		file_put_contents('/intranet/saml.log',print_r($_SERVER,true),FILE_APPEND);
-		file_put_contents('/intranet/saml.log',print_r($_REQUEST,true),FILE_APPEND);
-	
+        file_put_contents('/intranet/saml.log',print_r($_SERVER,true),FILE_APPEND);
+        file_put_contents('/intranet/saml.log',print_r($_REQUEST,true),FILE_APPEND);
 
-	//if scheduler
-	 if (!empty($_SERVER['argv'])) {
-		return array();
-	 }
+
+        //if scheduler
+        if (\TYPO3\CMS\Core\Core\Environment::isCli()) {
+            return array();
+            
+        }
 
         $this->tablename = 'fe_users';
         $this->tablenameGroup = 'fe_groups';
         $this->nameField = 'name';
         if ((TYPO3_MODE === 'BE')) {
             $this->tablename = 'be_users';
-	    $this->tablenameGroup = 'be_groups';
+            $this->tablenameGroup = 'be_groups';
             $this->nameField = 'realName';
         }
 
@@ -65,7 +66,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
     public function authUser(array $user): int {
         if ($_SERVER['REMOTE_ADDR'] == '127.0.0.1') {
-                return 200;
+            return 200;
         }
 
         if (!empty($user)) {
@@ -78,46 +79,46 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $as = new \SimpleSAML\Auth\Simple('default-sp');
         $as->requireAuth();
         $attr = $as->getAttributes();
-	print_r($attr);
+        print_r($attr);
         $username = $attr[$this->settings['usernamePath']][0];
         $groups = $attr[$this->settings['groupPath']];
 
-	//si invité
-	if (empty($username)) {
-		$username = $attr['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'][0];
-	}
-	//comma seperated	
-	$adminGroups  = explode(",",$this->settings[TYPO3_MODE.'AdminGroup']);
-	//print_r($attr);
+        //si invité
+        if (empty($username)) {
+            $username = $attr['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'][0];
+        }
+        //comma seperated
+        $adminGroups  = explode(",",$this->settings[TYPO3_MODE.'AdminGroup']);
+        //print_r($attr);
 
         //TODO createGroup
         //group validation
         $hasGroup = true;
 
-	$displayName =$attr['http://schemas.microsoft.com/identity/claims/displayname'][0];
-        
+        $displayName =$attr['http://schemas.microsoft.com/identity/claims/displayname'][0];
+
         if ((!empty($this->settings[TYPO3_MODE.'Group'])) && (!empty($groups))) {
 
             $validationgroups = explode(',',$this->settings[TYPO3_MODE.'Group']);
             $hasGroup  = false;
             $isAdmin = 0;
             foreach($validationgroups as $k => $g) {
-		//0 id 1 groupname    
-	        $groupMapping = explode(":",$g);
+                //0 id 1 groupname
+                $groupMapping = explode(":",$g);
 
-		//if admin
+                //if admin
                 if (!empty($adminGroups) && (TYPO3_MODE=="BE")) {
-		    foreach($adminGroups as $keyG => $admg) {
-			    $admGroupId = explode(":",$admg);
-			    if (in_array($admGroupId[0],$groups) !== false) {
-				$isAdmin = true;
-			}
-		    }
+                    foreach($adminGroups as $keyG => $admg) {
+                        $admGroupId = explode(":",$admg);
+                        if (in_array($admGroupId[0],$groups) !== false) {
+                            $isAdmin = true;
+                        }
+                    }
                 }
 
                 if (in_array($groupMapping[0],$groups) !== false) {
                     $hasGroup = true;
-		    $data['usergroup'][] = $this->getGroup($groupMapping[1]);
+                    $data['usergroup'][] = $this->getGroup($groupMapping[1]);
                 }
             }
 
@@ -130,22 +131,22 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
         $user = $this->getUserInfo($username);
 
-        
+
         //if the user is not found, we create it.
         if(empty($user)) {
             $tableConnection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->tablename);
             $data['tstamp'] = time();
             $data['username'] = $username;
-	    $data['pid'] = 1;
-	    $data[$this->nameField] = $displayName;
-	    $data['usergroup'] = implode(",",$data['usergroup']);
+            $data['pid'] = 1;
+            $data[$this->nameField] = $displayName;
+            $data['usergroup'] = implode(",",$data['usergroup']);
             if ((TYPO3_MODE == 'BE')  && ($isAdmin)) {
                 $data['admin'] = 1;
                 $data['pid'] = 0;
             }
             if ((TYPO3_MODE == 'BE')  ) {
                 $data['pid'] = 0;
-	    }
+            }
 
 
             $tableConnection->insert(
@@ -184,7 +185,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         return $ret;
 
     }
-    
+
 
     private function getGroup($name) {
         $ret = false;
@@ -203,11 +204,11 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $ret = $group[0];
             return $ret['uid'];
         } else {
-	    $queryBuilder->insert($this->tablenameGroup)->values([
-		      'title' => $name
-	    ])->execute();
-	    return $queryBuilder->getConnection()->lastInsertId();
-	}
+            $queryBuilder->insert($this->tablenameGroup)->values([
+                'title' => $name
+            ])->execute();
+            return $queryBuilder->getConnection()->lastInsertId();
+        }
 
     }
 
