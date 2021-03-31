@@ -33,10 +33,6 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
     public function getUser() {
 
 
-        file_put_contents('/intranet/saml.log',print_r($_SERVER,true),FILE_APPEND);
-        file_put_contents('/intranet/saml.log',print_r($_REQUEST,true),FILE_APPEND);
-
-
         //if scheduler
         if (\TYPO3\CMS\Core\Core\Environment::isCli()) {
             return array();

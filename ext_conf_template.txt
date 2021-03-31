@@ -1,9 +1,10 @@
 
-# cat=basic/enable; type=string; label=FE group to validate
+# cat=basic/enable; type=string; label=FE group to validate format  UUID:Name,UUID:name...
 FEGroup = 
-# cat=basic/enable; type=string; label=BE group to validate
+# cat=basic/enable; type=string; label=BE group to validate including BEAdminGroup format  UUID:Name,UUID:name...
 BEGroup = 
-# cat=basic/enable; type=string; label=admin be group
+# cat=basic/enable; type=string; label=admin be group  format  UUID:Name,UUID:name...
+
 BEAdminGroup = 
 
 # cat=basic/enable; type=string; label=Username claim path

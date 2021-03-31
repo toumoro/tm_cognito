@@ -24,3 +24,6 @@ $GLOBALS['TYPO3_CONF_VARS']['SVCONF']['auth']['setup']['FE_fetchUserIfNoSession'
 $GLOBALS['TYPO3_CONF_VARS']['SYS']['Objects']['TYPO3\\CMS\\Backend\\Controller\\LogoutController'] = array(
     'className' => 'Toumoro\\TmSaml\\Xclass\\LogoutController'
  );
+$GLOBALS['TYPO3_CONF_VARS']['SYS']['Objects']['TYPO3\\CMS\\Backend\\Controller\\LoginController'] = array(
+    'className' => 'Toumoro\\TmSaml\\Xclass\\LoginController'
+ );
