@@ -1,23 +1,24 @@
 {
-    "name": "toumoro/tm-cognito",
+    "name": "toumoro/tm-saml",
     "type": "typo3-cms-extension",
     "description": "",
     "authors": [],
     "require": {
-        "typo3/cms-core": "^8.7.1"
+        "typo3/cms-core": "^9.5.0 || ^10.4.99",
+        "simplesamlphp/simplesamlphp": "^1.19.0"
     },
     "autoload": {
         "psr-4": {
-            "Toumoro\\TmCognito\\": "Classes"
+            "Toumoro\\TmSaml\\": "Classes"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Toumoro\\TmCognito\\Tests\\": "Tests"
+            "Toumoro\\TmSaml\\Tests\\": "Tests"
         }
     },
     "replace": {
-        "tm_cognito": "self.version",
-        "typo3-ter/tm-cognito": "self.version"
+        "tm_saml": "self.version",
+        "typo3-ter/tm-saml": "self.version"
     }
 }

@@ -1,5 +1,9 @@
 <?php
-namespace Toumoro\TmCognito\Service;
+namespace Toumoro\TmSaml\Service;
+
+
+use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /***
  *
@@ -12,30 +16,41 @@ namespace Toumoro\TmCognito\Service;
  *
  ***/
 
-require  \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('tm_cognito').'Resources/Private/PHP/php-jwt/src/ExpiredException.php';
-require  \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('tm_cognito').'Resources/Private/PHP/php-jwt/src/JWK.php';
-require  \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('tm_cognito').'Resources/Private/PHP/php-jwt/src/JWT.php';
-
 
 /**
  * thx to Causal\IgLdapSsoAuth Xavier Perseguers <xavier@causal.ch>
  */
-class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService {
-    /**
-     * Default constructor
-     */
-    public function __construct()
-    {
-        //get ext config
-        $config = $GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['tm_cognito'];
-        $this->config = $config ? unserialize($config) : [];
+class AuthenticationService extends \TYPO3\CMS\Core\Authentication\AuthenticationService {
+
+    private $settings = array();
+
+    public function initAuth    (       $mode,  $loginData, $authInfo,  $pObj ) {
+        $this->settings =  $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['tm_saml'];
+        parent::initAuth($mode,$loginData,$authInfo,$pObj);
+
     }
 
-
     public function getUser() {
-        if ((TYPO3_MODE === 'BE') && ($this->config['active'])){
-                $user = $this->valUser();
+
+
+		file_put_contents('/intranet/saml.log',print_r($_SERVER,true),FILE_APPEND);
+		file_put_contents('/intranet/saml.log',print_r($_REQUEST,true),FILE_APPEND);
+	
+
+	//if scheduler
+	 if (isset($_SERVER['argv'])) {
+		return array();
+	 }
+        $this->tablename = 'fe_users';
+        $this->tablenameGroup = 'fe_groups';
+        $this->nameField = 'name';
+        if ((TYPO3_MODE === 'BE')) {
+            $this->tablename = 'be_users';
+	    $this->tablenameGroup = 'be_groups';
+            $this->nameField = 'realName';
         }
+
+        $user = $this->valUser();
         return $user;
     }
 
@@ -46,81 +61,154 @@ class AuthenticationService extends \TYPO3\CMS\Sv\AuthenticationService {
      * @param array $user Data of user.
      * @return int|false
      */
-    public function authUser(array $user) {
-        $status = 403;
-         
-        if (!$this->config['active']) {
-            $status = 100;
-        } else {
-            $tmpUser = $this->valUser();
-            var_dump($tmpUser);
-            if ($tmpUser == false) {
-                $status = 100;
-            } else {
-                if (isset($tmpUser['username'])) {
-                    $status = 200;
-                }
-            }
-        }
-        
-        //exit();
-        return $status;
 
+    public function authUser(array $user): int {
+        if ($_SERVER['REMOTE_ADDR'] == '127.0.0.1') {
+                return 200;
+        }
+
+        if (!empty($user)) {
+            return 200;
+        }
+        return 100;
     }
 
     private function valUser() {
+        $as = new \SimpleSAML\Auth\Simple('default-sp');
+        $as->requireAuth();
+        $attr = $as->getAttributes();
+	print_r($attr);
+        $username = $attr[$this->settings['usernamePath']][0];
+        $groups = $attr[$this->settings['groupPath']];
 
-        $user = false;
-        $lastUser = $this->getCookieData('LastAuthUser');
-        $lastUserEscape = str_replace('.','_',$lastUser);
-        if ($lastUser) {
-            $jwks_json = file_get_contents('https://cognito-idp.'.$this->config['region'].'.amazonaws.com/'.$this->config['userPoolId'].'/.well-known/jwks.json');
-            $jwk = \Firebase\JWT\JWK::parseKeySet($jwks_json);
-            $idToken = $this->getCookieData('idToken',$lastUserEscape);
-            $tks = explode('.', $idToken);
+	//si invité
+	if (empty($username)) {
+		$username = $attr['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'][0];
+	}
+	//comma seperated	
+	$adminGroups  = explode(",",$this->settings[TYPO3_MODE.'AdminGroup']);
+	//print_r($attr);
 
-            list($headb64, $bodyb64, $cryptob64) = $tks;
-            $jwt_header = json_decode(base64_decode($headb64),true);
-            $jwt_body = json_decode(base64_decode($bodyb64),true);
-            $key=$jwk[$jwt_header["kid"]];
+        //TODO createGroup
+        //group validation
+        $hasGroup = true;
 
-            try {
-                $decoded = \Firebase\JWT\JWT::decode($idToken, $key, array($jwt_header["alg"]));
-            } catch(\Firebase\JWT\ExpiredException $e) {
-                exit("expired");
-            }
-            $decoded_array = (array) $decoded;
-            
-            $user=$this->fetchUserRecord($decoded_array['cognito:username']);
-            //print_r($decoded_array);
-            //$user=$this->fetchUserRecord('dev');
-            
-            if ((!empty($this->config['cognitoRequiredGroup'])) && ($user)) {
-                
-                if (isset($decoded_array['cognito:groups'])) {
-                    if (array_search($this->config['cognitoRequiredGroup'],$decoded_array['cognito:groups']) === FALSE) {
-                        $user = false;
-                    }
+	$displayName =$attr['http://schemas.microsoft.com/identity/claims/displayname'][0];
+        
+        if ((!empty($this->settings[TYPO3_MODE.'Group'])) && (!empty($groups))) {
+
+            $validationgroups = explode(',',$this->settings[TYPO3_MODE.'Group']);
+            $hasGroup  = false;
+            $isAdmin = 0;
+            foreach($validationgroups as $k => $g) {
+		//0 id 1 groupname    
+	        $groupMapping = explode(":",$g);
+
+		//if admin
+                if (!empty($adminGroups) && (TYPO3_MODE=="BE")) {
+		    foreach($adminGroups as $keyG => $admg) {
+			    $admGroupId = explode(":",$admg);
+			    if (in_array($admGroupId[0],$groups) !== false) {
+				$isAdmin = true;
+			}
+		    }
                 }
-            
+
+                if (in_array($groupMapping[0],$groups) !== false) {
+                    $hasGroup = true;
+		    $data['usergroup'][] = $this->getGroup($groupMapping[1]);
+                }
             }
+
         }
+        if (!$hasGroup) {
+            exit("403");
+            return false;
+        }
+
+
+        $user = $this->getUserInfo($username);
+
+        
+        //if the user is not found, we create it.
+        if(empty($user)) {
+            $tableConnection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable($this->tablename);
+            $data['tstamp'] = time();
+            $data['username'] = $username;
+	    $data['pid'] = 1;
+	    $data[$this->nameField] = $displayName;
+	    $data['usergroup'] = implode(",",$data['usergroup']);
+            if ((TYPO3_MODE == 'BE')  && ($isAdmin)) {
+                $data['admin'] = 1;
+                $data['pid'] = 0;
+            }
+            if ((TYPO3_MODE == 'BE')  ) {
+                $data['pid'] = 0;
+	    }
+
+
+            $tableConnection->insert(
+                $this->tablename,
+                $data
+            );
+
+            $user = $this->getUserInfo($username);
+
+        }
+
         return $user;
 
+
+
     }
 
-    private function getCookieData($key,$user=null) {
+
+    private function getUserInfo($username) {
+
         $ret = false;
-        $cookieKey = 'CognitoIdentityServiceProvider_'.$this->config['clientId'].'_';
-        if ($user != null) {
-            $cookieKey .= $user."_";
-        }
-        $cookieKey .= $key;
-        if (!empty($_COOKIE[$cookieKey])) {
-            $ret = $_COOKIE[$cookieKey];
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable($this->tablename);
+
+        $users = $queryBuilder
+            ->select('*')
+            ->from($this->tablename)
+            ->where(
+                $queryBuilder->expr()->eq('username', $queryBuilder->createNamedParameter($username))
+            )
+            ->execute()
+            ->fetchAll();
+        if (!empty($users)) {
+            $ret = $users[0];
         }
         return $ret;
-        
+
     }
+    
+
+    private function getGroup($name) {
+        $ret = false;
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+            ->getQueryBuilderForTable($this->tablenameGroup);
+
+        $group = $queryBuilder
+            ->select('*')
+            ->from($this->tablenameGroup)
+            ->where(
+                $queryBuilder->expr()->eq('title', $queryBuilder->createNamedParameter($name))
+            )
+            ->execute()
+            ->fetchAll();
+        if (!empty($group)) {
+            $ret = $group[0];
+            return $ret['uid'];
+        } else {
+	    $queryBuilder->insert($this->tablenameGroup)->values([
+		      'title' => $name
+	    ])->execute();
+	    return $queryBuilder->getConnection()->lastInsertId();
+	}
+
+    }
+
 
 }

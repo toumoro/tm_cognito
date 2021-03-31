@@ -1,5 +1,5 @@
 <?php
-namespace Toumoro\TmCognito\Xclass;
+namespace Toumoro\TmSaml\Xclass;
 
 /***
  *
@@ -35,10 +35,6 @@ class LogoutController extends  \TYPO3\CMS\Backend\Controller\LogoutController
     public function logoutAction(ServerRequestInterface $request, ResponseInterface $response)
     {
         
-        $this->logout();
-        
-        $redirectUrl = 'https://'.$_SERVER['HTTP_HOST'].'/signout';
-
         //remove all cookie
         if (isset($_SERVER['HTTP_COOKIE'])) {
             $cookies = explode(';', $_SERVER['HTTP_COOKIE']);

@@ -1,14 +1,13 @@
-# cat=basic/enable; type=boolean; label=Active ?
-active = 0
 
-# cat=basic/enable; type=string; label=Cognito app client id
-clientId =
+# cat=basic/enable; type=string; label=FE group to validate
+FEGroup = 
+# cat=basic/enable; type=string; label=BE group to validate
+BEGroup = 
+# cat=basic/enable; type=string; label=admin be group
+BEAdminGroup = 
 
-# cat=basic/enable; type=string; label=region
-region = 
+# cat=basic/enable; type=string; label=Username claim path
+usernamePath = http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name
+# cat=basic/enable; type=string; label=group claim path
+groupPath = http://schemas.microsoft.com/ws/2008/06/identity/claims/groups
 
-# cat=basic/enable; type=string; label=Userpool id
-userPoolId = 
-
-# cat=basic/enable; type=string; label=Cognito Required Group
-cognitoRequiredGroup = 
