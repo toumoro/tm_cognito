@@ -138,10 +138,10 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
             $data['usergroup'] = implode(",",$data['usergroup']);
             if ((TYPO3_MODE == 'BE')  && ($isAdmin)) {
                 $data['admin'] = 1;
-                $data['pid'] = 0;
             }
             if ((TYPO3_MODE == 'BE')  ) {
                 $data['pid'] = 0;
+                $data['options'] = 3;
             }
 
 
