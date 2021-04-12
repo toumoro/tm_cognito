@@ -75,7 +75,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
         $as = new \SimpleSAML\Auth\Simple('default-sp');
         $as->requireAuth();
         $attr = $as->getAttributes();
-        print_r($attr);
+        //print_r($attr);
         $username = $attr[$this->settings['usernamePath']][0];
         $groups = $attr[$this->settings['groupPath']];
 
