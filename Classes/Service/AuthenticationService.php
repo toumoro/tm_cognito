@@ -34,9 +34,8 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
 
 
         //if scheduler
-        if (\TYPO3\CMS\Core\Core\Environment::isCli()) {
+	if ((\TYPO3\CMS\Core\Core\Environment::isCli()) || ($_SERVER['REMOTE_ADDR'] == '127.0.0.1')) {
             return array();
-            
         }
 
         $this->tablename = 'fe_users';
@@ -61,7 +60,7 @@ class AuthenticationService extends \TYPO3\CMS\Core\Authentication\Authenticatio
      */
 
     public function authUser(array $user): int {
-        if ($_SERVER['REMOTE_ADDR'] == '127.0.0.1') {
+	if ((\TYPO3\CMS\Core\Core\Environment::isCli()) || ($_SERVER['REMOTE_ADDR'] == '127.0.0.1')) {
             return 200;
         }
 
